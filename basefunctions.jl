@@ -78,8 +78,10 @@ end
 
 isone(op::Operator)::Bool = isempty(op.ops)
 isone(op::Ts where Ts<:AbstractOp)::Bool  = (op.cnt == 0)
+
 one(::Type{Operator})::Operator = Operator()
 one(op::Type{<:AbstractOp})::AbstractOp = (op)(1)
+
 ==(a::Operator, b::Operator)::Bool = a.ops == b.ops
 function ==(a::AbstractOp, b::AbstractOp)::Bool
     ta = typeof(a)
@@ -103,7 +105,9 @@ function ==(a::AbstractOp, b::AbstractOp)::Bool
     return false
 end
 ==(a::Operator, b::AbstractOp)::Bool = lastindex(a.ops) == 1 && a.ops[1] == b
+
 lastindex(op::Operator)::Int = lastindex(op.ops)
+
 
 ###################################################################################################
 ############## Base Functions #####################################################################

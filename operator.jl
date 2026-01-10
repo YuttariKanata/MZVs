@@ -21,22 +21,22 @@ export left_act, right_act, ⬆️, ➡️, ⬇️, ⬅️, ➖, up, right, down
 ############## Operator Constants #################################################################
 
 
-const ⬆️::DataType    = OpUp
-const ➡️::DataType    = OpRight
-const ⬇️::DataType    = OpDown
-const ⬅️::DataType    = OpLeft
-const ➖::DataType    = OpMinus
-const up::DataType    = OpUp
-const right::DataType = OpRight
-const down::DataType  = OpDown
-const left::DataType  = OpLeft
-const minus::DataType = OpMinus
-const τ::DataType     = OpTau
-const 𖼷::DataType     = OpTau
-const η::DataType     = OpEta
-const ⋁::DataType     = OpEta
-const φ::DataType     = OpPhi
-const ∂::DataType     = OpDeriv
+const ⬆️  = OpUp(1)
+const ➡️ = OpRight(1)
+const ⬇️  = OpDown(1)
+const ⬅️  = OpLeft(1)
+const ➖ = OpMinus(1)
+const up = OpUp(1)
+const right = OpRight(1)
+const down = OpDown(1)
+const left = OpLeft(1)
+const minus = OpMinus(1)
+const τ = OpTau(1)
+const 𖼷 = OpTau(1)
+const η = OpEta(1)
+const ⋁ = OpEta(1)
+const φ = OpPhi(1)
+const ∂ = OpDeriv(1)
 
 
 ###################################################################################################

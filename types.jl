@@ -63,17 +63,13 @@ end   # φ
 
 # ∂n はパラメータ付き
 mutable struct OpDeriv <: AbstractOp
-    n::Int
     cnt::Int
+    n::Int
 end
-OpDeriv(n::Int) = OpDeriv(1,n)
+OpDeriv(n::Int) = OpDeriv(n,1)
 
 function (::Type{A})() where A <: AbstractOp
-    if A === OpDeriv
-        return A(1,1)
-    else
-        return A(1)
-    end
+    return A(1)
 end
 
 # Operator
@@ -105,15 +101,15 @@ end
 #  │    └─ ShuffleForm
 #  │
 #  ├─ HarmonicExpr (abstract)
-#  │    ├─ ZetaExpr (abstract)
-#  │    │    ├─ Hoffman
-#  │    │    ├─ Index
-#  │    │    ├─ MonoIndex
-#  │    │    └─ Word
 #  │    └─ HarmonicForm
 #  │
 #  └─ MPLCombination   # 有理数係数上の線形結合
-# 
+#
+# ZetaExpr (abstract)
+#   ├─ Hoffman
+#   ├─ Index
+#   ├─ MonoIndex
+#   └─ Word 
 #########################################################
 
 
@@ -125,22 +121,28 @@ abstract type ShuffleExpr  <: MPL end      # 反復積分系（shuffle 構造）
 abstract type HarmonicExpr <: MPL end      # z_i=1 に特化（調和和）
 
 # ζ 系（抽象）— 調和和の中でも ζ を中心に
-abstract type ZetaExpr     <: HarmonicExpr end
+abstract type ZetaExpr end
 
-# 指数の型（できたら UInt32/UInt16 へ）
-const ExprInt = Int
+# 有理数と整数
 const NN = Union{Integer,Rational}
 
 # ワード = インデックス列。ハッシュ性と軽さ重視で Tuple に
 # WordのTupleの中身はimmutableなものにしておいてください！！！
 #const Word = Tuple{Vararg{ExprInt}}  # 例: (2,3) など
 # Wordの定義を上記から下記へ変更した このためにWordがTupleのようにふるまうインターフェースをbasefunctions.jlに書いた
-struct Word <: ZetaExpr
+struct HoffmanWord <: ZetaExpr
     t::Tuple{Vararg{Int}}
-    function Word(w::Tuple{Vararg{Int}})
-        new(w)
+    function HoffmanWord(hw::Tuple{Vararg{Int}})
+        new(hw)
     end
 end
+struct IndexWord <: ZetaExpr
+    t::Tuple{Vararg{Int}}
+    function IndexWord(iw::Tuple{Vararg{Int}})
+        new(iw)
+    end
+end
+
 
 """
 個人によるIndexの向きの補正
@@ -162,21 +164,9 @@ const _OMIT_COUNTS = 100
 # Hoffman 代数の元：ワードの有限線形結合（係数は有理数）
 # xy^3x^2 -> [1,2,2,2,1,1]
 mutable struct Hoffman <: ZetaExpr
-    terms::Dict{Word,Rational{BigInt}}
+    terms::Dict{HoffmanWord,Rational{BigInt}}
     function Hoffman()
-        new(Dict{Word,Rational{BigInt}}())
-    end
-end
-
-# 「ζ系の生のインデックス」を薄いラッパで持つ
-mutable struct MonoIndex <: ZetaExpr
-    word::Word
-    coeff::Rational{BigInt}
-    function MonoIndex(word::Word, coeff::NN)
-        if iszero(coeff)
-            throw(DomainError(coeff,"coefficient cant not be 0."))
-        end
-        new(word,coeff)
+        new(Dict{HoffmanWord,Rational{BigInt}}())
     end
 end
 
@@ -184,9 +174,9 @@ end
 # もし _INDEX_ORIENTATION がfalseなら
 # x^2y^2x^3yxy -> [3,1,4,2]
 mutable struct Index <: ZetaExpr
-    terms::Dict{Word, Rational{BigInt}}
+    terms::Dict{IndexWord, Rational{BigInt}}
     function Index()
-        new(Dict{Word, Rational{BigInt}}())
+        new(Dict{IndexWord, Rational{BigInt}}())
     end
 end
 
@@ -233,4 +223,4 @@ mutable struct Poly{A}
     end
 end
 
-const T::Poly{Rational{BigInt}} = Poly{Rational{BigInt}}(Dict{Int,Rational{BigInt}}( 1 => Rational(BigInt(1)) ))
+const T::Poly{Rational{BigInt}} = Poly{Rational{BigInt}}( Dict{Int,Rational{BigInt}}( 1 => Rational(BigInt(1)) ) )

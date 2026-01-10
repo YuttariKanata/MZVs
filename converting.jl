@@ -1,0 +1,403 @@
+#[ converting.jl ]#
+
+# This file defines conversion functions between each type
+
+#=
+export HoffmanWordtoMonoIndex, IndexWordtoMonoIndex,
+       IndexWordtoHoffmanWord, HoffmanWordtoIndexWord,
+       HoffmanWordtoIndex, IndexWordtoIndex,
+       HoffmanWordtoHoffman, IndexWordtoHoffman,
+       x, y
+=#
+
+"""
+###################################################################################################
+                                        Operators
+###################################################################################################
+"""
+
+
+###################################################################################################
+############## Conversion Functions ###############################################################
+
+
+function Operator(sym::AbstractString, n::Integer=1)::Operator
+    op = Operator()
+    if n == 0
+        return op
+    end
+    push!(op.ops,str_to_op(sym,n))
+    return op
+end
+function Operator(v::Vector{<:AbstractOp})::Operator
+    opes = Operator()
+    append_clean!(opes,v)
+    return opes
+end
+function Operator(v::Vector{<:Tuple{AbstractString, Integer}})::Operator
+    lv = lastindex(v)
+    regv = Vector{AbstractOp}(undef,lv)
+    for i in 1:lv
+        regv[i] = str_to_op(v[i])
+    end
+    opes = Operator()
+    append_clean!(opes,regv)
+    return opes
+end
+Operator(op::Operator)::Operator = op
+function Operator(op::AbstractOp)::Operator
+    r = Operator()
+    if op.cnt == 0
+        return r
+    end
+    push!(r.ops,copy(op))
+    return r
+end
+function Operator(op::Type{<:AbstractOp})::Operator
+    r = Operator()
+    if op === OpDown
+        push!(r.ops,OpUp(-1))
+    else
+        push!(r.ops,(op)(1))
+    end
+    return r
+end
+function Operator(op::Type{<:AbstractOp},n::Int,k::Union{Int,Nothing}=nothing)::Operator
+    r = Operator()
+    if (n == 0 && k == nothing) || (k == 0)
+        return r
+    end
+    if op === OpDown
+        push!(r.ops,OpUp(-n))
+    elseif op === OpDeriv
+        if k == nothing
+            push!(r.ops,OpDeriv(1,n))
+        else
+            push!(r.ops,OpDeriv(n,k))
+        end
+    else
+        push!(r.ops,(op)(n))
+    end
+    return r
+end
+
+
+
+
+
+"""
+###################################################################################################
+                                        Hoffman MZV
+###################################################################################################
+"""
+
+
+###################################################################################################
+############## Conversion Functions ###############################################################
+
+# [============== about MonoIndex ==============]
+function MonoIndex(v::Union{Vector,Word})::MonoIndex
+    return MonoIndex(Tuple{Vararg{ExprInt}}(v),Rational(BigInt(1)))
+end
+function MonoIndex(x::Index)::MonoIndex
+    if !is_monomial(x)
+        throw(DomainError(x,"x must be monomial"))
+    end
+    return MonoIndex(first(keys(x.terms)),first(values(x.terms)))
+end
+function MonoIndex(w::Hoffman)::MonoIndex
+    if !is_monomial(w)
+        throw(DomainError(w,"w must be monomial"))
+    end
+    wo = first(keys(w.terms))
+    if get_index_orientation()
+        if wo[1] != 2 # yに対応するだけ
+            throw(DomainError(w,"w does not start with y"))
+        end
+        return MonoIndex(idxprs(wo))
+    else
+        if wo[end] != 2
+            throw(DomainError(w,"w does not end with y"))
+        end
+        return MonoIndex(idxprs_r(wo))
+    end
+end
+
+function HoffmanWordtoMonoIndex(w::Word)::MonoIndex
+    if get_index_orientation()
+        if w[1] != 2 # yに対応するだけ
+            throw(DomainError(w,"w does not start with y"))
+        end
+        return MonoIndex(idxprs(w))
+    else
+        if w[end] != 2
+            throw(DomainError(w,"w does not end with y"))
+        end
+        return MonoIndex(idxprs_r(w))
+    end
+end
+function IndexWordtoMonoIndex(w::Word)::MonoIndex
+    return MonoIndex(w,Rational(BigInt(1)))
+end
+
+MonoIndex(m::MonoIndex)::MonoIndex = m
+MonoIndex(n::NN)::MonoIndex = MonoIndex(Word(),n)
+# TODO: MonoIndex for hrm shf mpl 
+
+
+# [============== about Word ==============]
+Word()::Word = Word(())
+Word(x::Int...)::Word = Word(x)
+const x = Word(1)
+const y = Word(2)
+
+Word(v::Vector{Int})::Word = Word(Tuple(v))
+Word(m::MonoIndex)::Word = isone(m.coeff) ? m.word : throw(DomainError(m,"w's coefficient is not 1"))
+"""returned Index word"""
+function Word(i::Index)::Word
+    if !is_monomial(i)
+        throw(DomainError(i,"i must be monomial"))
+    end
+    if !isone(first(values(i.terms)))
+        throw(DomainError(i,"i's coefficient is not 1"))
+    end
+    return Word(first(keys(i.terms)))
+end
+"""returned Hoffman word"""
+function Word(w::Hoffman)::Word
+    if !is_monomial(w)
+        throw(DomainError(w,"w must be monomial"))
+    end
+    if !isone(first(values(w.terms)))
+        throw(DomainError(w,"w's coefficient is not 1"))
+    end
+    return Word(first(keys(w.terms)))
+end
+
+function IndexWordtoHoffmanWord(w::Word)::Word
+    if get_index_orientation()
+        return idxdprs(collect(w))
+    else
+        return idxdprs_r(collect(w))
+    end
+end
+function HoffmanWordtoIndexWord(w::Word)::Word
+    if get_index_orientation()
+        if w[1] != 2 # yに対応するだけ
+            throw(DomainError(w,"w does not start with y"))
+        end
+        return Word(idxprs(w))
+    else
+        if w[end] != 2
+            throw(DomainError(w,"w does not end with y"))
+        end
+        return Word(idxprs_r(w))
+    end
+end
+
+Word(w::Word)::Word = w
+# TODO: Word for hrm shf mpl
+
+
+# [============== about Index ==============]
+function Index(x::Int...)
+    idx = Index()
+    wv = Word(x)
+    idx.terms[wv] = Rational(BigInt(1))
+    return idx
+end
+function Index(t::Tuple{Vararg{Int}})::Index
+    idx = Index()
+    wv = Word(t)
+    idx.terms[wv] = Rational(BigInt(1))
+    return idx
+end
+function Index(v::Vector{Int})::Index
+    idx = Index()
+    wv = Word(v)
+    idx.terms[wv] = Rational(BigInt(1))
+    return idx
+end
+function Index(c::NN, v::Vector{Int})::Index
+    idx = Index()
+    wv = Word(v)
+    idx.terms[wv] = c
+    return idx
+end
+function Index(v::Vector{Vector{Int}})::Index
+    idx = Index()
+    c = Rational(BigInt(1))
+    for vi in v
+        wvi = Word(vi)
+        if haskey(idx.terms,wvi)
+            idx.terms[wvi] += c
+        else
+            idx.terms[wvi] = c
+        end
+    end
+    return idx
+end
+function Index(v::Tuple{Vector{Vector{Int}}, Vector{Bool}})::Index
+    idx = Index()
+    c = Rational(BigInt(1))
+    for i in 1:lastindex(v[2])
+        wvi = Word(v[1][i])
+        if haskey(idx.terms,wvi)
+            if v[2][i]
+                idx.terms[wvi] -= c
+            else
+                idx.terms[wvi] += c
+            end
+        else
+            if v[2][i]
+                idx.terms[wvi] = -c
+            else
+                idx.terms[wvi] = c
+            end
+        end
+    end
+    return idx
+end
+function Index(m::MonoIndex)::Index
+    idx = Index()
+    idx.terms[m.word] = m.coeff
+    return idx
+end
+function HoffmanWordtoIndex(w::Word,coeff::NN = Rational(BigInt(1)))::Index
+    idx = Index()
+    idx.terms[HoffmanWordtoIndexWord(w)] = coeff
+    return idx
+end
+function IndexWordtoIndex(w::Word,coeff::NN = Rational(BigInt(1)))::Index
+    idx = Index()
+    idx.terms[w] = coeff
+    return idx
+end
+function Index(w::Hoffman)::Index
+    idx = Index()
+    for (k,v) in w.terms
+        idx.terms[HoffmanWordtoIndexWord(k)] = v
+    end
+    return idx
+end
+
+Index(i::Index)::Index = i
+# function Index(n::NN)::Index
+#     idx = Index()
+#     idx.terms[Word()] = n
+#     return idx
+# end
+# TODO: Index for hrm shf mpl
+
+
+# [============== about Hoffman ==============]
+function Hoffman(v::Vector{Vector{Int}})::Hoffman
+    w = Hoffman()
+    c = Rational(BigInt(1))
+    for vi in v
+        wvi = Word(vi)
+        if haskey(w.terms,wvi)
+            w.terms[wvi] += c
+        else
+            w.terms[wvi] = c
+        end
+    end
+    return w
+end
+function Hoffman(m::MonoIndex)::Hoffman
+    w = Hoffman()
+    w.terms[IndexWordtoHoffmanWord(m.word)] = m.coeff
+    return w
+end
+function HoffmanWordtoHoffman(wm::Word)::Hoffman
+    w = Hoffman()
+    w.terms[wm] = Rational(BigInt(1))
+    return w
+end
+function IndexWordtoHoffman(i::Word)::Hoffman
+    w = Hoffman()
+    w.terms[IndexWordtoHoffmanWord(i)] = Rational(BigInt(1))
+    return w
+end
+function Hoffman(i::Index)::Hoffman
+    w = Hoffman()
+    for (k,v) in i.terms
+        w.terms[IndexWordtoHoffmanWord(k)] = v
+    end
+    return w
+end
+
+Hoffman(w::Hoffman)::Hoffman = w
+# function Hoffman(n::NN)::Hoffman
+#     w = Hoffman()
+#     w.terms[Word()] = n
+#     return w
+# end
+# TODO: Hoffman for hrm shf mpl
+
+
+# [============== about Poly ==============]
+
+# 汎用
+function Poly(w::A)::Poly{A} where A
+    r = Poly{A}()
+    r.terms[0] = w
+    return r
+end
+
+# 特殊な場合
+function Poly(w::Word)::Poly{Hoffman}
+    r = Poly{Hoffman}()
+    r.terms[0] = HoffmanWordtoHoffman(w)
+    return r
+end
+function Poly(m::MonoIndex)::Poly{Index}
+    r = Poly{Index}()
+    r.terms[0] = Index(m)
+    return r
+end
+function Poly(a::NN)::Poly{Rational{BigInt}}
+    r = Poly{Rational{BigInt}}()
+    r.terms[0] = a
+    return r
+end
+
+# 自己
+function Poly(r::Poly{A})::Poly{A} where A
+    return r
+end
+
+# 相互
+function Hoffman(a::Poly{Index})::Poly{Hoffman}
+    r = Poly{Hoffman}()
+    for (d,c) in a.terms
+        r.terms[d] = Hoffman(c)
+    end
+    return r
+end
+Hoffman(a::Poly{Hoffman})::Poly{Hoffman} = a
+function Index(a::Poly{Hoffman})::Poly{Index}
+    r = Poly{Index}()
+    for (d,c) in a.terms
+        r.terms[d] = Index(c)
+    end
+    return r
+end
+Index(a::Poly{Index})::Poly{Index} = a
+function Hoffman(a::Poly{Rational{BigInt}})::Poly{Hoffman}
+    r = Poly{Hoffman}()
+    for (d,c) in a.terms
+        r.terms[d] = Hoffman(c)
+    end
+    return r
+end
+function Index(a::Poly{Rational{BigInt}})::Poly{Index}
+    r = Poly{Index}()
+    for (d,c) in a.terms
+        r.terms[d] = one(Index)*c
+    end
+    return r
+end
+
+# TODO: Poly for hrm shf mpl
+

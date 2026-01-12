@@ -20,7 +20,9 @@ export HoffmanWordtoMonoIndex, IndexWordtoMonoIndex,
 ###################################################################################################
 ############## Conversion Functions ###############################################################
 
-
+function Operator()
+    return Operator(Vector{AbstractOp}())
+end
 function Operator(sym::AbstractString, n::Integer=1)::Operator
     op = Operator()
     if n == 0
@@ -97,7 +99,7 @@ end
 
 # [============== about MonoIndex ==============]
 function MonoIndex(v::Union{Vector,Word})::MonoIndex
-    return MonoIndex(Tuple{Vararg{ExprInt}}(v),Rational(BigInt(1)))
+    return MonoIndex(Tuple{Vararg{Int}}(v),Rational(BigInt(1)))
 end
 function MonoIndex(x::Index)::MonoIndex
     if !is_monomial(x)

@@ -4,7 +4,7 @@
 
 #=
 export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, OpDeriv, Operator,
-       MPL, ShuffleExpr, HarmonicExpr, ZetaExpr, ExprInt, NN, Word, Hoffman, MonoIndex, Index,
+       MPL, ShuffleExpr, HarmonicExpr, ZetaExpr, NN, Word, Hoffman, MonoIndex, Index,
        ShuffleForm, HarmonicForm, MPLCombination, Poly, T,
        set_index_orientation!, get_index_orientation
 =#
@@ -36,6 +36,7 @@ export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, 
 # 抽象シンボル
 abstract type AbstractOp end
 
+# cntは繰り返しの回数
 mutable struct OpUp    <: AbstractOp
     cnt::Int
 end   # ↑
@@ -75,9 +76,8 @@ end
 # Operator
 mutable struct Operator
     ops::Vector{AbstractOp}
-
-    function Operator()
-        new(Vector{AbstractOp}())
+    function Operator(v::Vector{<:AbstractOp})
+        new(clean(v))
     end
 end
 
@@ -128,19 +128,15 @@ const NN = Union{Integer,Rational}
 
 # ワード = インデックス列。ハッシュ性と軽さ重視で Tuple に
 # WordのTupleの中身はimmutableなものにしておいてください！！！
-#const Word = Tuple{Vararg{ExprInt}}  # 例: (2,3) など
+#const Word = Tuple{Vararg{Int}}  # 例: (2,3) など
 # Wordの定義を上記から下記へ変更した このためにWordがTupleのようにふるまうインターフェースをbasefunctions.jlに書いた
-struct HoffmanWord <: ZetaExpr
+abstract type AbstractWord <: ZetaExpr end
+
+struct HoffmanWord <: AbstractWord
     t::Tuple{Vararg{Int}}
-    function HoffmanWord(hw::Tuple{Vararg{Int}})
-        new(hw)
-    end
 end
-struct IndexWord <: ZetaExpr
+struct IndexWord <: AbstractWord
     t::Tuple{Vararg{Int}}
-    function IndexWord(iw::Tuple{Vararg{Int}})
-        new(iw)
-    end
 end
 
 
@@ -165,8 +161,9 @@ const _OMIT_COUNTS = 100
 # xy^3x^2 -> [1,2,2,2,1,1]
 mutable struct Hoffman <: ZetaExpr
     terms::Dict{HoffmanWord,Rational{BigInt}}
-    function Hoffman()
-        new(Dict{HoffmanWord,Rational{BigInt}}())
+    function Hoffman(d::Dict{HoffmanWord,Rational{BigInt}})
+        filter!(p->!iszero(p.second),d)
+        new(d)
     end
 end
 
@@ -175,8 +172,9 @@ end
 # x^2y^2x^3yxy -> [3,1,4,2]
 mutable struct Index <: ZetaExpr
     terms::Dict{IndexWord, Rational{BigInt}}
-    function Index()
-        new(Dict{IndexWord, Rational{BigInt}}())
+    function Index(d::Dict{IndexWord,Rational{BigInt}})
+        filter!(p->!iszero(p.second),d)
+        new(d)
     end
 end
 
@@ -213,14 +211,6 @@ end
 # 多項式一つで済ます
 mutable struct Poly{A}
     terms::Dict{Int,A}
-
-    function Poly{A}() where {A}
-        new(Dict{Int,A}())
-    end
-
-    function Poly{A}(dic::Dict{Int,A}) where {A}
-        new(dic)
-    end
 end
 
 const T::Poly{Rational{BigInt}} = Poly{Rational{BigInt}}( Dict{Int,Rational{BigInt}}( 1 => Rational(BigInt(1)) ) )

@@ -449,21 +449,21 @@ end
 @inline function copy(a::Hoffman)::Hoffman
     r = Hoffman()
     for (w,c) in a
-        r[w] = c
+        r.terms[w] = c
     end
     return r
 end
 @inline function copy(a::Index)::Index
     r = Index()
     for (w,c) in a
-        r[w] = c
+        r.terms[w] = c
     end
     return r
 end
 @inline function copy(p::Poly{A})::Poly{A} where A
     r = Poly{A}()
     for (deg,h) in p
-        r[deg] = copy(h)
+        r.terms[deg] = copy(h)
     end
     return r
 end
@@ -535,17 +535,17 @@ one(::Type{HoffmanWord})::HoffmanWord = HoffmanWord()
 one(::Type{IndexWord})::IndexWord     = IndexWord()
 function one(::Type{Index})::Index
     idx = Index()
-    idx[IndexWord()] = Rational(BigInt(1))
+    idx.terms[IndexWord()] = Rational(BigInt(1))
     return idx
 end
 function one(::Type{Hoffman})::Hoffman
     w = Hoffman()
-    w[HoffmanWord()] = Rational(BigInt(1))
+    w.terms[HoffmanWord()] = Rational(BigInt(1))
     return w
 end
 function one(::Type{Poly{A}})::Poly{A} where A
     r = Poly{A}()
-    r[0] = one(A)
+    r.terms[0] = one(A)
     return r
 end
 # TODO: one for hrm shf mpl

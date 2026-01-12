@@ -23,15 +23,15 @@ export shift_degree, add!
 
   Addition and Subtraction
 -------------------------------------------------------------------------------------------------------------------
-|  Add/Sub       |  NN  |  Word  |  Hoffman  |  MonoIndex  |  Index  |  Poly NN   |  Poly Hoffman  |  Poly Index  |
+|  Add/Sub       |  NN  |  HofW  |  Hoffman  |  IndexWord  |  Index  |  Poly NN   |  Poly Hoffman  |  Poly Index  |
 |----------------+------+--------+-----------+-------------+---------+------------+----------------+--------------|
 |  NN            |  NN  |  Hof   |  Hof      |  Idx        |  Idx    |  Poly NN   |  Poly Hof      |  Poly Idx    |
 |----------------+------+--------+-----------+-------------+---------+------------+----------------+--------------|
-|  Word          |      |  Hof   |  Hof      |  X          |  X      |  Poly Hof  |  Poly Hof      |  X           |
+|  HofW          |      |  Hof   |  Hof      |  X          |  X      |  Poly Hof  |  Poly Hof      |  X           |
 |----------------+------+--------+-----------+-------------+---------+------------+----------------+--------------|
 |  Hoffman       |      |        |  Hof      |  X          |  X      |  Poly Hof  |  Poly Hof      |  X           |
 |----------------+------+--------+-----------+-------------+---------+------------+----------------+--------------|
-|  MonoIndex     |      |        |           |  Idx        |  Idx    |  Poly Idx  |  X             |  Poly Idx    |
+|  IndexWord     |      |        |           |  Idx        |  Idx    |  Poly Idx  |  X             |  Poly Idx    |
 |----------------+------+--------+-----------+-------------+---------+------------+----------------+--------------|
 |  Index         |      |        |           |             |  Idx    |  Poly Idx  |  X             |  Poly Idx    |
 |----------------+------+--------+-----------+-------------+---------+------------+----------------+--------------|
@@ -48,45 +48,43 @@ export shift_degree, add!
 
 ############################## ADDITIVE INVERSE ##############################
 
-# Word
-function -(a::Word)::Hoffman
-    r = Hoffman()
-    r.terms[a] = Rational(BigInt(-1))
-    return r
-end
+# HoffmanWord
+(-)(a::HoffmanWord)::Hoffman = Hoffman(a, -1)
+(+)(a::HoffmanWord)::HoffmanWord = a
 
 # Hoffman
-function -(a::Hoffman)::Hoffman
+function (-)(a::Hoffman)::Hoffman
     result = Hoffman()
-    for (w, c) in a.terms
-        result.terms[w] = -c
+    for (w, c) in a
+        result[w] = -c
     end
     return result
 end
+(+)(a::Hoffman)::Hoffman = a
 
-# MonoIndex
-function -(a::MonoIndex)::MonoIndex
-    result = MonoIndex(a.word,-a.coeff)
-    return result
-end
+# IndexWord
+(-)(a::IndexWord)::IndexWord = Index(a, -1)
+(+)(a::IndexWord)::IndexWord = a
 
 # Index
-function -(a::Index)::Index
+function (-)(a::Index)::Index
     result = Index()
-    for (w, c) in a.terms
-        result.terms[w] = -c
+    for (w, c) in a
+        result[w] = -c
     end
     return result
 end
+(+)(a::Index)::Index = a
 
 # Poly
-function -(a::Poly{A})::Poly{A} where A
+function (-)(a::Poly{A})::Poly{A} where A
     r = copy(a)
-    for (d, h) in a.terms
-        r.terms[d] = -h
+    for (d, h) in a
+        r[d] = -h
     end
     return r
 end
+(+)(a::Poly{A})::Poly{A} where A = a
 
 
 
@@ -95,31 +93,25 @@ end
 ########## Word ##########
 
 # Word NN
-function +(a::Word, b::NN)::Hoffman
-    w = Hoffman()
-    if a != one(Word)      # one(Word)
-        w.terms[a] = Rational(BigInt(1))
-        w.terms[Word()] = b
-    else
-        if b != Clong(-1)
-            w.terms[Word()] = b + 1
-        end
-    end
-    return w
+function +(a::HoffmanWord, b::NN)::Hoffman
+    r = Hoffman(a)
+    r[HoffmanWord()] = getindex(r,HoffmanWord()) + b
+    filter!(p->!iszero(p.second),r.terms)
+    return r
 end
-+(a::NN, b::Word)::Hoffman = +(b,a)
--(a::Word, b::NN)::Hoffman = +(a,-b)
-function -(a::NN, b::Word)::Hoffman
++(a::NN, b::HoffmanWord)::Hoffman = +(b,a)
+-(a::HoffmanWord, b::NN)::Hoffman = +(a,-b)
+function -(a::NN, b::HoffmanWord)::Hoffman
     w = Hoffman()
-    if b != one(Word)      # one(Word)
-        w.terms[b] = Rational(BigInt(-1))
-        w.terms[Word()] = a
+    if b != one(HoffmanWord)
+        w[b] = -1
+        w[HoffmanWord()] = a
     else
-        if a != Culong(1)
-            w.terms[Word()] = a - 1
+        if a != 1
+            w[HoffmanWord()] = a - 1
         end
     end
-    return w
+    return w    # 1 - 1 = 0
 end
 
 # Word Word

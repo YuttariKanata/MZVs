@@ -5,9 +5,9 @@ import Base: iszero, isone, zero, one, copy, ==, lastindex
 import Base: getindex, length, iterate, firstindex, eltype, isempty, copy, collect, Tuple, vcat, hcat, reverse, ==, hash, isless, isequal, convert, in, iterate, haskey, keys, values, pairs
 
 #=
-export is_monomial, is_hoffman, is_index, is_monoindex,
-       is_shuffleform, is_harmonicform, is_mplcombination, is_shuffleexpr, is_harmonicexpr,is_zetaexpr
-       isadmissible,
+export is_monomial, is_hoffmanword, is_hoffman, is_index, is_indexword,
+       is_shuffleform, is_harmonicform, is_mplcombination, is_shuffleexpr, is_harmonicexpr, is_zetaexpr,
+       is_admissible,
 =#
 
 """
@@ -145,7 +145,7 @@ const _Operator_to_String_Table = Dict{DataType, String}(
     m = match(r"^∂(\d+)$", sym)
     if m !== nothing
         i = parse(Int,m.captures[1])
-        return OpDeriv(i,n)
+        return OpDeriv(n,i)
     end
     return _String_to_Operator_Table[sym](n)
 end
@@ -153,7 +153,7 @@ end
     m = match(r"^∂(\d+)$", t[1])
     if m !== nothing
         i = parse(Int,m.captures[1])
-        return OpDeriv(i,t[2])
+        return OpDeriv(t[2],i)
     end
     return _String_to_Operator_Table[t[1]](t[2])
 end
@@ -346,11 +346,11 @@ end
     opl = lastindex(op.ops)
     b = Vector{AbstractOp}(undef,opl)   # 先に領域を確保してやると賢い
     for i in 1:opl
-        x = op.ops[i]
-        if x isa OpDeriv
-            b[i] = OpDeriv(x.n,x.cnt)
+        a = op.ops[i]
+        if a isa OpDeriv
+            b[i] = OpDeriv(a.cnt,a.n)
         else
-            b[i] = typeof(x)(x.cnt)
+            b[i] = typeof(a)(a.cnt)
         end
     end
     r.ops = b
@@ -360,7 +360,7 @@ end
 @inline function copy(op::AbstractOp)::AbstractOp
     top = typeof(op)
     if top === OpDeriv
-        return OpDeriv(op.n,op.cnt)
+        return OpDeriv(op.cnt,op.n)
     elseif top === OpDown
         return OpUp(-op.cnt)
     elseif top === OpTau
@@ -418,14 +418,14 @@ iterate(w::AbstractWord) = iterate(w.t)  # ←これが超重要！
 
 for fname in (:length, :isempty, :keys, :values, :pairs, :iterate)
     @eval begin
-        $fname(x::Hoffman) = $fname(x.terms)
-        $fname(x::Index)   = $fname(x.terms)
-        $fname(x::Poly)    = $fname(x.terms)
+        $fname(a::Hoffman) = $fname(a.terms)
+        $fname(a::Index)   = $fname(a.terms)
+        $fname(a::Poly)    = $fname(a.terms)
     end
 end
-iterate(x::Hoffman,s...) = iterate(x.terms,s...)
-iterate(x::Index,s...)   = iterate(x.terms,s...)
-iterate(x::Poly,s...)    = iterate(x.terms,s...)
+iterate(a::Hoffman,s...) = iterate(a.terms,s...)
+iterate(a::Index,s...)   = iterate(a.terms,s...)
+iterate(a::Poly,s...)    = iterate(a.terms,s...)
 getindex(h::Hoffman, w::HoffmanWord) = get(h.terms, w, zero(Rational{BigInt}))
 getindex(i::Index, w::IndexWord)     = get(i.terms, w, zero(Rational{BigInt}))
 getindex(r::Poly{A}, d::Int) where A = get(r.terms, d, zero(A))
@@ -446,6 +446,27 @@ convert(::Type{Index}, d::Dict{IndexWord, Rational{BigInt}})::Index       = Inde
 function convert(::Type{Poly{A}}, d::Dict{Int, A})::Poly{A} where A
     return Poly{A}(d)
 end
+@inline function copy(a::Hoffman)::Hoffman
+    r = Hoffman()
+    for (w,c) in a
+        r[w] = c
+    end
+    return r
+end
+@inline function copy(a::Index)::Index
+    r = Index()
+    for (w,c) in a
+        r[w] = c
+    end
+    return r
+end
+@inline function copy(p::Poly{A})::Poly{A} where A
+    r = Poly{A}()
+    for (deg,h) in p
+        r[deg] = copy(h)
+    end
+    return r
+end
 
 
 ###################################################################################################
@@ -453,7 +474,7 @@ end
 
 
 iszero(w::AbstractWord)::Bool     = false
-iszero(x::Index)::Bool            = isempty(x.terms)
+iszero(i::Index)::Bool            = isempty(i.terms)
 iszero(w::Hoffman)::Bool          = isempty(w.terms)
 #iszero(hrm::HarmonicForm)::Bool   =  # TODO
 #iszero(shf::ShuffleForm)::Bool    =  # TODO
@@ -461,14 +482,14 @@ iszero(w::Hoffman)::Bool          = isempty(w.terms)
 iszero(r::Poly)::Bool             = isempty(r.terms)
 
 isone(w::AbstractWord)::Bool     = isempty(w.t)
-isone(x::Hoffman)::Bool          = length(x) == 1 && haskey(x,HoffmanWord()) && isone(x[HoffmanWord()])
-isone(x::Index)::Bool            = length(x) == 1 && haskey(x,IndexWord()) && isone(x[IndexWord()])
+isone(w::Hoffman)::Bool          = length(w) == 1 && haskey(w,HoffmanWord()) && isone(w[HoffmanWord()])
+isone(i::Index)::Bool            = length(i) == 1 && haskey(i,IndexWord()) && isone(i[IndexWord()])
 #isone(hrm::HarmonicForm)::Bool   =  # TODO
 #isone(shf::ShuffleForm)::Bool    =  # TODO
 #isone(mpl::MPLCombination)::Bool =  # TODO
 isone(r::Poly)::Bool             = length(r) == 1 && haskey(r,0) && isone(r[0])
 
-function isadmissible(idx::Index)::Bool
+function is_admissible(idx::Index)::Bool
     if get_index_orientation()
         for w in keys(idx)
             if !isempty(w) && w[end] <= 1
@@ -485,7 +506,7 @@ function isadmissible(idx::Index)::Bool
         return true
     end
 end
-function isadmissible(h::Hoffman)::Bool
+function is_admissible(h::Hoffman)::Bool
     if get_index_orientation()
         for w in keys(h)
             if !isempty(w) && w[end] >= 2
@@ -514,13 +535,13 @@ one(::Type{HoffmanWord})::HoffmanWord = HoffmanWord()
 one(::Type{IndexWord})::IndexWord     = IndexWord()
 function one(::Type{Index})::Index
     idx = Index()
-    idx[IndexWord()] = 1
-    return  idx
+    idx[IndexWord()] = Rational(BigInt(1))
+    return idx
 end
 function one(::Type{Hoffman})::Hoffman
     w = Hoffman()
-    w[HoffmanWord()] = 1
-    return  w
+    w[HoffmanWord()] = Rational(BigInt(1))
+    return w
 end
 function one(::Type{Poly{A}})::Poly{A} where A
     r = Poly{A}()
@@ -529,23 +550,24 @@ function one(::Type{Poly{A}})::Poly{A} where A
 end
 # TODO: one for hrm shf mpl
 
-is_monomial(x::Index)::Bool                 = length(x.terms) == 1
-is_monomial(w::Hoffman)::Bool               = length(w.terms) == 1
+is_monomial(i::Index)::Bool                 = length(i) == 1
+is_monomial(w::Hoffman)::Bool               = length(w) == 1
 is_monomial(w::AbstractWord)::Bool          = true
 #is_monomial(hrm::HarmonicForm)::Bool        = # TODO
 #is_monomial(shf::ShuffleForm)::Bool         = # TODO
 #is_monomial(mpl::MPLCombination)::Bool      = # TODO
-is_monomial(r::Poly)::Bool                 = length(r.terms) == 1
+is_monomial(r::Poly)::Bool                  = length(r) == 1
 
-is_hoffman(x::MPL)::Bool        = typeof(x) === Hoffman
-is_index(x::MPL)::Bool          = typeof(x) === Index
-is_monoindex(x::MPL)::Bool      = typeof(x) === MonoIndex
-is_shuffleform(x::MPL)::Bool    = typeof(x) === ShuffleForm
-is_harmonicform(x::MPL)::Bool   = typeof(x) === HarmonicForm
-is_mplcombination(x::MPL)::Bool = typeof(x) === MPLCombination
-is_shuffleexpr(x::MPL)::Bool    = typeof(x) <:  ShuffleExpr
-is_harmonicexpr(x::MPL)::Bool   = typeof(x) <:  HarmonicExpr
-is_zetaexpr(x::MPL)::Bool       = typeof(x) <:  ZetaExpr
+is_hoffmanword(a::MPL)::Bool    = typeof(a) === HoffmanWord
+is_hoffman(a::MPL)::Bool        = typeof(a) === Hoffman
+is_indexword(a::MPL)::Bool      = typeof(a) === IndexWord
+is_index(a::MPL)::Bool          = typeof(a) === Index
+is_shuffleform(a::MPL)::Bool    = typeof(a) === ShuffleForm
+is_harmonicform(a::MPL)::Bool   = typeof(a) === HarmonicForm
+is_mplcombination(a::MPL)::Bool = typeof(a) === MPLCombination
+is_shuffleexpr(a::MPL)::Bool    = typeof(a) <:  ShuffleExpr
+is_harmonicexpr(a::MPL)::Bool   = typeof(a) <:  HarmonicExpr
+is_zetaexpr(a::MPL)::Bool       = typeof(a) <:  ZetaExpr
 
 
 ###################################################################################################
@@ -610,26 +632,4 @@ end
         w[pos] = 2
     end
     return Word(w)
-end
-
-@inline function copy(a::Hoffman)::Hoffman
-    r = Hoffman()
-    for (w,c) in a
-        r[w] = c
-    end
-    return r
-end
-@inline function copy(a::Index)::Index
-    r = Index()
-    for (w,c) in a
-        r[w] = c
-    end
-    return r
-end
-@inline function copy(p::Poly{A})::Poly{A} where A
-    r = Poly{A}()
-    for (deg,h) in p
-        r[deg] = copy(h)
-    end
-    return r
 end

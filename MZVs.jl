@@ -40,19 +40,15 @@ module MZVs
 
        # types.jl
 export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, OpDeriv, Operator,
-       MPL, ShuffleExpr, HarmonicExpr, ZetaExpr, NN, HoffmanWord, IndexWord, Hoffman, Index,
+       MPL, ShuffleExpr, HarmonicExpr, ZetaExpr, NN, AbstractWord, HoffmanWord, Hoffman, IndexWord, Index,
        ShuffleForm, HarmonicForm, MPLCombination, Poly, T,
-       set_index_orientation!, get_index_orientation
-       # # basefunctions.jl
-       # is_monomial, is_hoffman, is_index, is_monoindex,
-       # is_shuffleform, is_harmonicform, is_mplcombination, is_shuffleexpr, is_harmonicexpr,is_zetaexpr,
-       # isadmissible,
+       set_index_orientation!, get_index_orientation,
+       # basefunctions.jl
+       is_monomial, is_hoffmanword, is_hoffman, is_index, is_indexword,
+       is_shuffleform, is_harmonicform, is_mplcombination, is_shuffleexpr, is_harmonicexpr, is_zetaexpr,
+       is_admissible,
        # # converting.jl
-       # HoffmanWordtoMonoIndex, IndexWordtoMonoIndex,
-       # IndexWordtoHoffmanWord, HoffmanWordtoIndexWord,
-       # HoffmanWordtoIndex, IndexWordtoIndex,
-       # HoffmanWordtoHoffman, IndexWordtoHoffman,
-       # x, y,
+       index, x, y
        # # arithmetic.jl
        # shift_degree, add!,
        # # hoffman.jl
@@ -77,7 +73,7 @@ export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, 
 
 include("types.jl")
 include("basefunctions.jl")
-#include("converting.jl")
+include("converting.jl")
 #include("arithmetic.jl")
 #include("hoffman.jl")
 #include("accessors.jl")
@@ -85,3 +81,11 @@ include("basefunctions.jl")
 #include("calc.jl")
 
 end
+
+#=
+開発時の注意
+x,yを使わない
+Tを使わない
+Operator()は正規化を内部でするのでコンストラクタを作るときはOperator()を通す
+
+=#

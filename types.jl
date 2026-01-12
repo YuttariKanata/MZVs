@@ -4,7 +4,7 @@
 
 #=
 export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, OpDeriv, Operator,
-       MPL, ShuffleExpr, HarmonicExpr, ZetaExpr, NN, Word, Hoffman, MonoIndex, Index,
+       MPL, ShuffleExpr, HarmonicExpr, ZetaExpr, NN, AbstractWord, HoffmanWord, Hoffman, IndexWord, Index,
        ShuffleForm, HarmonicForm, MPLCombination, Poly, T,
        set_index_orientation!, get_index_orientation
 =#

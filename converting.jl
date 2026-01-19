@@ -164,16 +164,16 @@ HoffmanWord(w::HoffmanWord)::HoffmanWord = w
 # [============== about Index ==============]
 Index()::Index = Index(Dict{IndexWord,Rational{BigInt}}())
 function Index(idx::Int...)::Index
-    return Index( Dict{IndexWord,Rational{BigInt}}( IndexWord(idx),Rational(BigInt(1)) ) )
+    return Index( Dict{IndexWord,Rational{BigInt}}( IndexWord(idx) => Rational(BigInt(1)) ) )
 end
 function Index(t::Tuple{Vararg{Int}})::Index
-    return Index( Dict{IndexWord,Rational{BigInt}}( IndexWord(t),Rational(BigInt(1)) ) )
+    return Index( Dict{IndexWord,Rational{BigInt}}( IndexWord(t) => Rational(BigInt(1)) ) )
 end
 function Index(v::Vector{Int})::Index
-    return Index( Dict{IndexWord,Rational{BigInt}}( IndexWord(v),Rational(BigInt(1)) ) )
+    return Index( Dict{IndexWord,Rational{BigInt}}( IndexWord(v) => Rational(BigInt(1)) ) )
 end
 function Index(c::NN, v::Vector{Int})::Index
-    return Index( Dict{IndexWord,Rational{BigInt}}( IndexWord(v),Rational(BigInt(c)) ) )
+    return Index( Dict{IndexWord,Rational{BigInt}}( IndexWord(v) => Rational(BigInt(c)) ) )
 end
 function Index(v::Vector{Vector{Int}})::Index
     idx = Index()
@@ -201,10 +201,10 @@ function Index(v::Tuple{Vector{Vector{Int}}, Vector{Bool}})::Index
     return idx
 end
 function Index(m::IndexWord,coeff::NN = Rational(BigInt(1)))::Index
-    return Index( Dict{IndexWord,Rational{BigInt}}( m,Rational(BigInt(coeff)) ) )
+    return Index( Dict{IndexWord,Rational{BigInt}}( m => Rational(BigInt(coeff)) ) )
 end
 function Index(w::HoffmanWord,coeff::NN = Rational(BigInt(1)))::Index
-    return Index( Dict{IndexWord,Rational{BigInt}}( IndexWord(w),Rational(BigInt(coeff)) ) )
+    return Index( Dict{IndexWord,Rational{BigInt}}( IndexWord(w) => Rational(BigInt(coeff)) ) )
 end
 function Index(w::Hoffman)::Index   # Hoffmanは正規化されている
     idx = Index()
@@ -235,10 +235,10 @@ function Hoffman(v::Vector{Vector{Int}})::Hoffman
     return w
 end
 function Hoffman(m::IndexWord, coeff=Rational(BigInt(1)))::Hoffman
-    return Hoffman( Dict{HoffmanWord,Rational{BigInt}}( HoffmanWord(m),Rational(BigInt(coeff)) ) )
+    return Hoffman( Dict{HoffmanWord,Rational{BigInt}}( HoffmanWord(m) => Rational(BigInt(coeff)) ) )
 end
 function Hoffman(wm::HoffmanWord, coeff=Rational(BigInt(1))::NN)::Hoffman
-    return Hoffman( Dict{HoffmanWord,Rational{BigInt}}( wm,Rational(BigInt(coeff)) ) )
+    return Hoffman( Dict{HoffmanWord,Rational{BigInt}}( wm => Rational(BigInt(coeff)) ) )
 end
 function Hoffman(i::Index)::Hoffman # Indexは正規化されている
     w = Hoffman()
@@ -259,19 +259,19 @@ Hoffman(w::Hoffman)::Hoffman = w
 
 # [============== about Poly ==============]
 
-poly_promote_rule(::Type{HoffmanWord}) = Hoffman
-poly_promote_rule(::Type{Hoffman})     = Hoffman
-poly_promote_rule(::Type{IndexWord})   = Index
-poly_promote_rule(::Type{Index})       = Index
-poly_promote_rule(::Type{NN})          = Rational{BigInt}
-poly_promote_rule(::Type{<:Integer})   = Rational{BigInt}
-poly_promote_rule(::Type{<:Rational})  = Rational{BigInt}
-poly_promote_rule(::Type{T}) where T   = T
+poly_typelift(::Type{HoffmanWord}) = Hoffman
+poly_typelift(::Type{Hoffman})     = Hoffman
+poly_typelift(::Type{IndexWord})   = Index
+poly_typelift(::Type{Index})       = Index
+poly_typelift(::Type{NN})          = Rational{BigInt}
+poly_typelift(::Type{<:Integer})   = Rational{BigInt}
+poly_typelift(::Type{<:Rational})  = Rational{BigInt}
+poly_typelift(::Type{A}) where A   = A
 
 # 汎用
 Poly{A}() where A = Poly{A}(Dict{Int,A}())
 function Poly(w::A) where A
-    pA = poly_promote_rule(A)
+    pA = poly_typelift(A)
     r = Poly{pA}()
     r.terms[0] = pA(w)
     return r

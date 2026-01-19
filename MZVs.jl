@@ -48,9 +48,9 @@ export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, 
        is_shuffleform, is_harmonicform, is_mplcombination, is_shuffleexpr, is_harmonicexpr, is_zetaexpr,
        is_admissible,
        # # converting.jl
-       index, x, y
+       index, x, y,
        # # arithmetic.jl
-       # shift_degree, add!,
+       shift_degree
        # # hoffman.jl
        # shuffle_product, stuffle_product, star_stuffle_product, 
        # shuffle_product_double, stuffle_product_double, star_stuffle_product_double,
@@ -74,7 +74,7 @@ export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, 
 include("types.jl")
 include("basefunctions.jl")
 include("converting.jl")
-#include("arithmetic.jl")
+include("arithmetic.jl")
 #include("hoffman.jl")
 #include("accessors.jl")
 #include("operator.jl")

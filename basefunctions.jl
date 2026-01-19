@@ -392,6 +392,8 @@ iterate(w::AbstractWord, s...) = iterate(w.t, s...)
 firstindex(w::AbstractWord) = firstindex(w.t)
 lastindex(w::AbstractWord) = lastindex(w.t)
 eltype(::Type{AbstractWord}) = Int
+eltype(::Type{HoffmanWord})  = Int
+eltype(::Type{IndexWord})    = Int
 isempty(w::AbstractWord) = isempty(w.t)
 
 # ===== 各種操作互換 =====
@@ -426,6 +428,9 @@ end
 iterate(a::Hoffman,s...) = iterate(a.terms,s...)
 iterate(a::Index,s...)   = iterate(a.terms,s...)
 iterate(a::Poly,s...)    = iterate(a.terms,s...)
+eltype(::Type{Hoffman})         = Tuple{HoffmanWord,Rational{BigInt}}
+eltype(::Type{Index})           = Tuple{IndexWord  ,Rational{BigInt}}
+eltype(::Type{Poly{A}}) where A = Tuple{Int,A}
 getindex(h::Hoffman, w::HoffmanWord) = get(h.terms, w, zero(Rational{BigInt}))
 getindex(i::Index, w::IndexWord)     = get(i.terms, w, zero(Rational{BigInt}))
 getindex(r::Poly{A}, d::Int) where A = get(r.terms, d, zero(A))
@@ -446,20 +451,8 @@ convert(::Type{Index}, d::Dict{IndexWord, Rational{BigInt}})::Index       = Inde
 function convert(::Type{Poly{A}}, d::Dict{Int, A})::Poly{A} where A
     return Poly{A}(d)
 end
-@inline function copy(a::Hoffman)::Hoffman
-    r = Hoffman()
-    for (w,c) in a
-        r.terms[w] = c
-    end
-    return r
-end
-@inline function copy(a::Index)::Index
-    r = Index()
-    for (w,c) in a
-        r.terms[w] = c
-    end
-    return r
-end
+@inline copy(a::Hoffman)::Hoffman = Hoffman(Dict(a.terms))
+@inline copy(a::Index)::Index = Index(Dict(a.terms))
 @inline function copy(p::Poly{A})::Poly{A} where A
     r = Poly{A}()
     for (deg,h) in p

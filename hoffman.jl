@@ -23,48 +23,6 @@ export shuffle_product, stuffle_product, star_stuffle_product,
 """
 
 ###################################################################################################
-############## monomial functions #################################################################
-
-#=
-last_letter(w::Word)::Word = length(w) == 0 ? () : Word(w[end])
-remove_last_letter(w::Word)::Word = w[1:end-1]
-last_lettering(w::Word, g::ExprInt)::Int64 = (ig = findlast(==(g),w)) |> isnothing ? 0 : ig
-evaporate_last_lettering(w::Word, g::ExprInt)::Word = w[last_lettering(w,g):end]
-remove_last_letter(w::Word, g::ExprInt)::Word = w[1:last_lettering(w,g)]
-
-function last_letter_idx(v::Word)::Word
-    if length(v) == 0
-        return ()
-    elseif v[end] == 1
-        return (2)
-    else
-        return (1)
-    end
-end
-function remove_last_letter_idx(v::Word)::Word
-    if v[end] == 1
-        return v[1:end-1]
-    else
-        r = copy(v)
-        r[end] -= 1
-        return r
-    end
-end
-function last_letter_v(v::Vector{Int})::Vector{Int}
-    if lastindex(v) == 0
-        return Int[]
-    else
-        return [v[end]]
-    end
-end
-function remove_last_letter_v(v::Vector{Int})::Vector{Int}
-    return v[1:end-1]
-end
-=#
-
-#last_lettering(v::Idv, g::ExprInt)::Idv = (ig = findlast(==(g),v)) |> isnothing ? 0 : ig
-
-###################################################################################################
 ############## monomial products ##################################################################
 
 function monomial_sh(a::Vector{Int},b::Vector{Int})::Vector{Vector{Int}}

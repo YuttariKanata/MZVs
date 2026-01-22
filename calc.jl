@@ -232,8 +232,24 @@ end
 [4,2,5]⨝[2,3,9]
 
 
+A
+A
+A
+A
+A
+ BBBBBB
 
 =#
-function monomial_sh_i2(a::Vector{Int}, b::Vector{Int})
+function monomial_sh_i2(a::Vector{Index}, b::Vector{Index})
+    la = length(a)
+    lb = length(b)
+    ra = Vector{Index}(undef,la)
+    rb = Vector{Index}(undef,lb)
 
+    for ai in 1:la
+        S = Index()
+        for i in 1:ai
+            
+        end
+    end
 end

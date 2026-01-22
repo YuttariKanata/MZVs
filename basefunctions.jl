@@ -502,14 +502,14 @@ end
 function is_admissible(h::Hoffman)::Bool
     if get_index_orientation()
         for w in keys(h)
-            if !isempty(w) && w[end] >= 2
+            if !isempty(w) && w[end] == 1
                 return false
             end
         end
         return true
     else
         for w in keys(h)
-            if !isempty(w) && w[1] >= 2
+            if !isempty(w) && w[1] == 1
                 return false
             end
         end
@@ -567,13 +567,13 @@ is_zetaexpr(a::MPL)::Bool       = typeof(a) <:  ZetaExpr
 ############## Base Functions #####################################################################
 
 # index compressor
-""" example (2,2,1,1,2,1) -> [1,3,2] """
+""" example (1,1,0,0,1,0) -> [1,3,2] """
 @inline function idxprs(w::HoffmanWord)::Vector{Int}
-    n2 = count(==(2), w)
+    n2 = count(==(1), w)
     v = Vector{Int}(undef,n2)
     idx = 0
     for x in w
-        if x == 2
+        if x == 1
             idx += 1
             v[idx] = 1
         else
@@ -582,14 +582,14 @@ is_zetaexpr(a::MPL)::Bool       = typeof(a) <:  ZetaExpr
     end
     return v
 end
-""" example (1,2,1,1,2,2) -> [2,3,1] """
+""" example (0,1,0,0,1,1) -> [2,3,1] """
 @inline function idxprs_r(w::HoffmanWord)::Vector{Int}
-    n2 = count(==(2), w)
+    n2 = count(==(1), w)
     v = Vector{Int}(undef,n2)
     idx = 0
     cnt = 1
     for x in w
-        if x == 1
+        if x == 0
             cnt += 1
         else
             idx += 1
@@ -600,29 +600,29 @@ end
     return v
 end
 # index expander
-""" example [1,3,2] -> (2,2,1,1,2,1) """
+""" example [1,3,2] -> (1,1,0,0,1,0) """
 @inline function idxdprs(v::Vector{Int})::HoffmanWord
     # 総長さを一度に計算してから確保
     total_len = sum(v)
-    w = ones(Int,total_len)
+    w = zeros(Int,total_len)
 
     pos = 1
     for t in v
-        w[pos] = 2
+        w[pos] = 1
         pos += t
     end
-    return Word(w)
+    return HoffmanWord(w)
 end
-""" example [2,3,1] -> (1,2,1,1,2,2) """
+""" example [2,3,1] -> (0,1,0,0,1,1) """
 @inline function idxdprs_r(v::Vector{Int})::HoffmanWord
     # 総長さを一度に計算してから確保
     total_len = sum(v)
-    w = ones(Int,total_len)
+    w = zeros(Int,total_len)
 
     pos = 0
     for t in v
         pos += t
-        w[pos] = 2
+        w[pos] = 1
     end
-    return Word(w)
+    return HoffmanWord(w)
 end

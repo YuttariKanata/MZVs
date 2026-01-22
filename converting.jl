@@ -89,12 +89,12 @@ function IndexWord(w::Hoffman)::IndexWord
     end
     wo = first(keys(w))
     if get_index_orientation()
-        if wo[1] != 2 # yに対応するだけ
+        if wo[1] != 1 # yに対応するだけ
             throw(DomainError(w,"w does not start with y"))
         end
         return IndexWord(idxprs(wo))
     else
-        if wo[end] != 2
+        if wo[end] != 1
             throw(DomainError(w,"w does not end with y"))
         end
         return IndexWord(idxprs_r(wo))
@@ -102,12 +102,12 @@ function IndexWord(w::Hoffman)::IndexWord
 end
 function IndexWord(w::HoffmanWord)::IndexWord
     if get_index_orientation()
-        if w[1] != 2 # yに対応するだけ
+        if w[1] != 1 # yに対応するだけ
             throw(DomainError(w,"w does not start with y"))
         end
         return IndexWord(idxprs(w))
     else
-        if w[end] != 2
+        if w[end] != 1
             throw(DomainError(w,"w does not end with y"))
         end
         return IndexWord(idxprs_r(w))
@@ -124,8 +124,8 @@ index(s...)::IndexWord = IndexWord(s...)    # = Index(s...)にするべき？
 # [============== about Word ==============]
 HoffmanWord()::HoffmanWord = HoffmanWord(Tuple{}())
 HoffmanWord(s::Int...)::HoffmanWord = HoffmanWord(s)
-const x = HoffmanWord(1)
-const y = HoffmanWord(2)
+const x = HoffmanWord(0)
+const y = HoffmanWord(1)
 
 HoffmanWord(v::Vector{Int})::HoffmanWord = HoffmanWord(Tuple{Vararg{Int}}(v))
 function HoffmanWord(w::Hoffman)::HoffmanWord
